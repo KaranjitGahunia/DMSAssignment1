@@ -3,5 +3,7 @@ Client/Server messaging application. Implemented with Java
 
 To do List:
 - Server Message using UDP
-- Message Class and Sub class implementation
+- BroadCast Message class to send to all clients
+- MessageTo class to send to specific client
 - Connect Server and Clients through different computers???
+- Notify when Client disconnects
