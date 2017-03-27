@@ -36,8 +36,9 @@ public class Connection extends Thread {
 
     public void run() {
         try {
-            String clientRequest;
-            do {
+            String clientRequest = "";
+            
+            while (clientRequest != null && !DONE.equalsIgnoreCase(clientRequest.trim())) {
                 clientRequest = in.readUTF() + "\n";
                 String serverResponse = "From " + clientSocket.getInetAddress() + ": " + clientRequest;
                 System.out.println(serverResponse);
@@ -45,10 +46,13 @@ public class Connection extends Thread {
                 for (Connection connection : Server.connections) {
                     connection.out.writeUTF(serverResponse);
                 }
-
-            } while (clientRequest != null && !DONE.equalsIgnoreCase(clientRequest.trim()));
-
+            }
+            
+            
             System.out.println("Closing Connection with " + clientSocket.getInetAddress());
+            text.append("Closing Connection with " + clientSocket.getInetAddress());
+            Server.connections.remove(this);
+
         } catch (Exception e) {
 
         }

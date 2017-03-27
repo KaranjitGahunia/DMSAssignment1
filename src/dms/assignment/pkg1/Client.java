@@ -12,7 +12,11 @@ import java.awt.event.ActionListener;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -27,7 +31,7 @@ import javax.swing.JTextField;
  *
  * @author Alex
  */
-public class Client extends JPanel implements ActionListener {
+public class Client extends JFrame implements ActionListener {
 
     /**
      * @param args the command line arguments
@@ -40,7 +44,6 @@ public class Client extends JPanel implements ActionListener {
     DataInputStream input;
     Socket socket;
 
-    static JFrame frame;
     public JPanel panel;
     public JPanel textPanel;
     public JScrollPane scrollpane;
@@ -50,13 +53,10 @@ public class Client extends JPanel implements ActionListener {
     public JButton confirm;
 
     public Client() {
-        super(new BorderLayout());
         setPreferredSize(new Dimension(500, 400));
 
-        frame = new JFrame("Client");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setResizable(true);
-        frame.getContentPane().add(this);
+        this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        this.setResizable(true);
 
         panel = new JPanel(new BorderLayout());
         add(panel);
@@ -77,16 +77,14 @@ public class Client extends JPanel implements ActionListener {
         inputPanel.add(inputField);
         confirm = new JButton("Enter");
         confirm.addActionListener(this);
-        frame.getRootPane().setDefaultButton(confirm);
+        this.getRootPane().setDefaultButton(confirm);
         inputPanel.add(confirm);
 
-        frame.pack();
-        frame.setVisible(true);
+        this.pack();
+        this.setVisible(true);
     }
 
     public void startClient() {
-        Scanner keyboard = new Scanner(System.in);
-
         try {
             socket = new Socket(HOST_NAME, PORT);
         } catch (Exception e) {
@@ -96,31 +94,35 @@ public class Client extends JPanel implements ActionListener {
         try {
             output = new DataOutputStream(socket.getOutputStream());
             input = new DataInputStream(socket.getInputStream());
-            System.out.println("Enter message or " + DONE + " to exit client.");
             text.append("Enter message or " + DONE + " to exit client." + "\n");
 
-            do {
-                clientRequest = keyboard.nextLine();
-                output.writeUTF(clientRequest);
-//                String serverResponse = input.readUTF();
-//                System.out.println("Server Response: " + serverResponse);
-//                text.append("Server Response: " + serverResponse + "\n");
-            } while (!DONE.equalsIgnoreCase(clientRequest.trim()));
         } catch (Exception e) {
-            System.err.println(e.getMessage());
+            System.err.println("Exception occurred: (starting client) " + e.getMessage());
+        }
+    }
+
+    public void receiveServerMessage() {
+        DatagramSocket aSocket = null;
+        try {
+            aSocket = new DatagramSocket();
+            byte[] buffer = new byte[100];
+            System.out.println("SENDING MESSAGE");
+            String m = "";
+            DatagramPacket request = new DatagramPacket(m.getBytes(),
+                    m.length(), InetAddress.getLocalHost(), 8765);
+            aSocket.send(request);
+
+            DatagramPacket serverMessage = new DatagramPacket(buffer, buffer.length);
+            aSocket.receive(serverMessage);
+            System.out.println(new String(serverMessage.getData()).trim());
+
+        } catch (SocketException e) {
+            System.out.println("Socket: " + e.getMessage());
+        } catch (IOException e) {
+            System.out.println("Socket: " + e.getMessage());
         } finally {
-            try {
-                if (input != null) {
-                    input.close();
-                }
-                if (output != null) {
-                    output.close();
-                }
-                if (socket != null) {
-                    socket.close();
-                }
-            } catch (Exception e) {
-                System.err.println(e.getMessage());
+            if (aSocket != null) {
+                aSocket.close();
             }
         }
     }
@@ -131,6 +133,7 @@ public class Client extends JPanel implements ActionListener {
         if (source == confirm) {
             clientRequest = inputField.getText();
             if (DONE.equalsIgnoreCase(clientRequest.trim())) {
+                text.setText("Connection closed. Please exit the Client.");
                 try {
                     if (input != null) {
                         input.close();
@@ -155,7 +158,34 @@ public class Client extends JPanel implements ActionListener {
                 }
             }
             inputField.setText("");
+            
+            receiveServerMessage();
         }
+    }
+
+    @Override
+    public void dispose() {
+        clientRequest = "done";
+        try {
+            output.writeUTF(clientRequest);
+        } catch (Exception exception) {
+            System.err.println(exception.getMessage());
+        }
+        try {
+            if (input != null) {
+                input.close();
+            }
+            if (output != null) {
+                output.close();
+            }
+            if (socket != null) {
+                socket.close();
+            }
+        } catch (Exception exception) {
+            System.err.println("Exception occurred: (dispose) " + exception.getMessage());
+        }
+
+        super.dispose();
     }
 
     public static void main(String args[]) {

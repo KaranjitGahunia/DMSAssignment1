@@ -7,9 +7,13 @@ package dms.assignment.pkg1;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.ArrayList;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -57,6 +61,8 @@ public class Server extends JPanel {
                 text.append("Connection made with " + socket.getInetAddress() + "\n");
                 Connection connection = new Connection(socket, text);
                 connections.add(connection);
+                
+                sendServerMessage();
             } catch (Exception e) {
                 stopServer = true;
                 System.err.println(e.getMessage());
@@ -67,6 +73,28 @@ public class Server extends JPanel {
         } catch (Exception e) {
             System.err.println(e.getMessage());
         }
+    }
+    
+    public void sendServerMessage() {
+        DatagramSocket aSocket = null;
+        try{
+            aSocket = new DatagramSocket(8765);
+            byte[] buffer = new byte[100];
+            while(true){
+                DatagramPacket request = new DatagramPacket(buffer, buffer.length);
+                aSocket.receive(request);               
+                
+                System.out.println("SENDING MESSAGE");
+                
+                String serverResponse = "Client List: " + connections.toString();
+                DatagramPacket serverMessage = new DatagramPacket(serverResponse.getBytes(),
+                        serverResponse.length(), request.getAddress(), request.getPort());
+                aSocket.send(serverMessage);
+            }
+        }
+        catch (SocketException e){System.out.println("Socket: " + e.getMessage());}
+        catch (IOException e) {System.out.println("IO: " + e.getMessage());}
+        finally {if(aSocket != null) aSocket.close();}
     }
 
     public static void main(String args[]) {
