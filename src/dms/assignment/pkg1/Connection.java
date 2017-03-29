@@ -27,16 +27,14 @@ public class Connection extends Thread {
     Socket clientSocket;
     Message message;
     JTextArea text;
-    ArrayList<Connection> connections;
     String clientName;
 
-    public Connection(Socket socket, JTextArea text, ArrayList connections) {
+    public Connection(Socket socket, JTextArea text) {
         try {
             clientSocket = socket;
             out = new ObjectOutputStream(socket.getOutputStream());
             in = new ObjectInputStream(socket.getInputStream());
             this.text = text;
-            this.connections = connections;
             this.start();
         } catch (Exception e) {
 
@@ -50,7 +48,7 @@ public class Connection extends Thread {
             String serverResponse = "";
             clientName = null;
 
-            if (clientName == null) {
+            while (clientName == null) {
                 clientRequest = (String) in.readObject();
                 if (uniqueName(clientRequest)) {
                     serverResponse = "Set " + clientSocket.getInetAddress() + " client name to " + clientRequest + "\n";
@@ -62,52 +60,56 @@ public class Connection extends Thread {
             }
 
             while (clientRequest != null && !DONE.equalsIgnoreCase(clientRequest.trim())) {
-                if (in.readObject() instanceof Message) {
-                    message = (Message) in.readObject();
-                    serverResponse = message.getMessage();
+                message = (Message) in.readObject();
+                serverResponse = message.getMessage();
 
-                    switch (message.getType()) {
-                        case MESSAGETO:
-                            for (Connection connection : connections) {
-                                if (connection.clientName.equalsIgnoreCase(message.getReceiver().trim())) {
-                                    connection.out.writeObject(clientName + ": " + serverResponse);
-                                }
+                switch (message.getType()) {
+                    case MESSAGETO:
+                        for (Connection connection : Server.connections) {
+                            if (connection.clientName.equalsIgnoreCase(message.getReceiver().trim())) {
+                                connection.out.writeObject("[From " + clientName + "]: " + serverResponse);
                             }
-                            break;
-                        case BROADCAST:
-                            for (Connection connection : connections) {
-                                connection.out.writeObject(clientName + ": " + serverResponse);
+                            if (connection.clientName.equalsIgnoreCase(clientName.trim())) {
+                                connection.out.writeObject("[To " + message.getReceiver() + "]: " + serverResponse);
                             }
-                            break;
-                        case DISCONNECT:
-                            System.out.println("Closing Connection with " + clientSocket.getInetAddress());
-                            String disconnectMsg = "Closing Connection with " + clientSocket.getInetAddress();
-                            for (Connection connection : connections) {
-                                connection.out.writeUTF(disconnectMsg);
+                        }
+                        break;
+                    case BROADCAST:
+                        for (Connection connection : Server.connections) {
+                            connection.out.writeObject("[ALL] " + clientName + ": " + serverResponse);
+                        }
+                        break;
+                    case DISCONNECT:
+                        System.out.println("Closing Connection with " + clientSocket.getInetAddress());
+                        String disconnectMsg = "[" + clientName + " has disconnected]";
+                        for (Connection connection : Server.connections) {
+                            if (connection != null) {
+                                connection.out.writeObject(disconnectMsg);
                             }
-                            for (Connection connection : connections) {
-                                if (connection.clientName.equalsIgnoreCase(clientName)) {
-                                    connections.remove(connection);
-                                }
+                        }
+                        for (Connection connection : Server.connections) {
+                            if (connection.clientName.equalsIgnoreCase(clientName)) {
+                                Server.connections.remove(connection);
                             }
-                            break;
-                        default:
-                            break;
-                    }
+                        }
+                        break;
                 }
 
             }
 
         } catch (Exception e) {
-
+            System.out.println(e);
         }
     }
 
     private boolean uniqueName(String name) {
-        if (connections.isEmpty()) {
+        if (Server.connections.isEmpty()) {
             return true;
         }
-        for (Connection connection : connections) {
+        if (name.matches(".*\\s+.*")) {
+            return false;
+        }
+        for (Connection connection : Server.connections) {
             if (!connection.equals(this)) {
                 if (connection.clientName.equalsIgnoreCase(name)) {
                     return false;

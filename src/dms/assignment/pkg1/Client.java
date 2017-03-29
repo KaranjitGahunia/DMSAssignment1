@@ -44,12 +44,11 @@ public class Client extends JFrame implements ActionListener, ListSelectionListe
     public static final String HOST_NAME = "localhost";
     final String DONE = "done";
     String clientRequest;
-    DataOutputStream output;
-    DataInputStream input;
     ObjectOutputStream out;
     ObjectInputStream in;
     Socket socket;
     UDPClient UDPclient;
+    ServerListener listener;
     String receiver;
     String clientName;
 
@@ -127,20 +126,19 @@ public class Client extends JFrame implements ActionListener, ListSelectionListe
                 // if server accepts name, proceed.
                 serverResponse = (String) in.readObject();
                 if (serverResponse.equalsIgnoreCase("INVALID NAME. ALREADY IN USE".trim())) {
-                    JOptionPane.showMessageDialog(rootPane, serverResponse, "Invalid Input", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(rootPane, "Name already in use or contains spaces.", "Invalid Input", JOptionPane.ERROR_MESSAGE);
                 } else {
                     break;
                 }
             }
-            
-            
-            
+
             text.append("Enter message or " + DONE + " to exit client." + "\n");
-            
+
             UDPclient = new UDPClient(text, this);
             UDPclient.start();
-            new ServerListener().start();
-            
+            listener = new ServerListener();
+            listener.start();
+
         } catch (Exception e) {
             System.err.println("Exception occurred: (starting client) " + e.getMessage());
         }
@@ -155,7 +153,7 @@ public class Client extends JFrame implements ActionListener, ListSelectionListe
         }
     }
 
-    public void broadcastMessage(String message) {
+    public synchronized void broadcastMessage(String message) {
         try {
             Message broadcast = new Message(message, MessageType.BROADCAST);
             out.writeObject(broadcast);
@@ -175,9 +173,8 @@ public class Client extends JFrame implements ActionListener, ListSelectionListe
 
     public void updateClientList(DefaultListModel clients) {
         String selection = (String) clientList.getSelectedValue();
-        System.out.println("Selection: " + selection);
         clientList.setModel(clients);
-        
+
         this.revalidate();
         this.repaint();
         clientList.setSelectedValue(selection, true);
@@ -186,19 +183,23 @@ public class Client extends JFrame implements ActionListener, ListSelectionListe
     public void disconnect() {
         disconnectMessage();
         System.out.println("DC MESSAGE SENT");
-        if (UDPclient != null) {
-            UDPclient.stopClient();
-        }
+
         text.setText("Connection closed. Please exit the Client.");
         try {
-            if (input != null) {
-                input.close();
+            if (in != null) {
+                in.close();
             }
-            if (output != null) {
-                output.close();
+            if (out != null) {
+                out.close();
             }
             if (socket != null) {
                 socket.close();
+            }
+            if (UDPclient != null) {
+                UDPclient.stopClient();
+            }
+            if (listener != null) {
+                listener.stopListener();
             }
         } catch (Exception exception) {
             System.err.println(exception.getMessage());
@@ -236,7 +237,6 @@ public class Client extends JFrame implements ActionListener, ListSelectionListe
     public void valueChanged(ListSelectionEvent e) {
         if (!e.getValueIsAdjusting()) {
             receiver = String.valueOf(clientList.getSelectedValue());
-            System.out.println(receiver);
         }
     }
 
@@ -256,17 +256,23 @@ public class Client extends JFrame implements ActionListener, ListSelectionListe
 
     class ServerListener extends Thread {
 
+        boolean run;
+
+        public void stopListener() {
+            run = false;
+        }
+
         public void run() {
-            while (true) {
+            run = true;
+            while (run) {
                 try {
                     String message = (String) in.readObject();
                     text.append(message + "\n");
                 } catch (IOException ex) {
                     System.out.println("Connection has been closed.");
-                    System.err.println(ex);
                     break;
                 } catch (ClassNotFoundException ex) {
-                    Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
+                    System.out.println(ex);
                 }
             }
         }

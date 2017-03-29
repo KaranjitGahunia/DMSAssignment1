@@ -12,6 +12,7 @@ import java.net.DatagramSocket;
 import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  *
@@ -19,9 +20,9 @@ import java.util.Iterator;
  */
 public class UDPServer extends Thread {
 
-    ArrayList<Connection> connections;
+    List<Connection> connections;
 
-    public UDPServer(ArrayList connections) {
+    public UDPServer(List connections) {
         this.connections = connections;
     }
 
@@ -53,7 +54,6 @@ public class UDPServer extends Thread {
                         DatagramPacket serverMessage = new DatagramPacket(serverResponse.getBytes(),
                                 serverResponse.length(), request.getAddress(), request.getPort());
                         aSocket.send(serverMessage);
-                        System.out.println(serverResponse);
                     } else {
                         sleep(3000);
                 }
