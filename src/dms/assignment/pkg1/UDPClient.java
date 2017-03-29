@@ -19,15 +19,21 @@ import javax.swing.JTextArea;
 public class UDPClient extends Thread {
 
     JTextArea text;
+    public boolean run;
 
     public UDPClient(JTextArea text) {
         this.text = text;
+        run = true;
+    }
+    
+    public void stopClient() {
+        run = false;
     }
 
     public void run() {
         DatagramSocket aSocket = null;
         try {
-            while (true) {
+            while (run) {
                 sleep(10000);
                 aSocket = new DatagramSocket();
                 byte[] buffer = new byte[100];

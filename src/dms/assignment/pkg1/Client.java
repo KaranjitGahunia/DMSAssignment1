@@ -43,6 +43,7 @@ public class Client extends JFrame implements ActionListener {
     DataOutputStream output;
     DataInputStream input;
     Socket socket;
+    UDPClient UDPclient;
 
     public JPanel panel;
     public JPanel textPanel;
@@ -96,7 +97,7 @@ public class Client extends JFrame implements ActionListener {
             input = new DataInputStream(socket.getInputStream());
             text.append("Enter message or " + DONE + " to exit client." + "\n");
             
-            UDPClient UDPclient = new UDPClient(text);
+            UDPclient = new UDPClient(text);
             UDPclient.start();
         } catch (Exception e) {
             System.err.println("Exception occurred: (starting client) " + e.getMessage());
@@ -142,6 +143,7 @@ public class Client extends JFrame implements ActionListener {
         clientRequest = "done";
         try {
             output.writeUTF(clientRequest);
+            UDPclient.stopClient();
         } catch (Exception exception) {
             System.err.println(exception.getMessage());
         }
