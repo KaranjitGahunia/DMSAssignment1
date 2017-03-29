@@ -33,7 +33,7 @@ public class UDPServer extends Thread{
                 DatagramPacket request = new DatagramPacket(buffer, buffer.length);
                 aSocket.receive(request);               
                 
-                String serverResponse = "Client List: " + Server.printConnections();
+                String serverResponse = "Client List: " + connections.toString();
                 DatagramPacket serverMessage = new DatagramPacket(serverResponse.getBytes(),
                         serverResponse.length(), request.getAddress(), request.getPort());
                 aSocket.send(serverMessage);
