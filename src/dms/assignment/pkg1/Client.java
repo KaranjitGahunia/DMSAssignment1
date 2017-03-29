@@ -12,13 +12,15 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -26,13 +28,14 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
-import javax.swing.ListModel;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 
 /**
  *
  * @author Alex
  */
-public class Client extends JFrame implements ActionListener {
+public class Client extends JFrame implements ActionListener, ListSelectionListener {
 
     /**
      * @param args the command line arguments
@@ -43,9 +46,11 @@ public class Client extends JFrame implements ActionListener {
     String clientRequest;
     DataOutputStream output;
     DataInputStream input;
+    ObjectOutputStream out;
+    ObjectInputStream in;
     Socket socket;
     UDPClient UDPclient;
-    DefaultListModel<String> clients;
+    String receiver;
 
     public JPanel panel;
     public JSplitPane textPanel;
@@ -70,7 +75,7 @@ public class Client extends JFrame implements ActionListener {
 
         panel = new JPanel(new BorderLayout());
         add(panel);
-        
+
         textPanel = new JSplitPane();
         panel.add(textPanel);
 
@@ -80,6 +85,7 @@ public class Client extends JFrame implements ActionListener {
         scrollpane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
 
         clientList = new JList();
+        clientList.addListSelectionListener(this);
 
         textPanel.setLeftComponent(scrollpane);
         textPanel.setRightComponent(clientList);
@@ -107,67 +113,77 @@ public class Client extends JFrame implements ActionListener {
         }
 
         try {
-            output = new DataOutputStream(socket.getOutputStream());
-            input = new DataInputStream(socket.getInputStream());
+            out = new ObjectOutputStream(socket.getOutputStream());
+            in = new ObjectInputStream(socket.getInputStream());
             // setting output and input streams
-            String serverResponse = null;
+            String serverResponse = "";
             while (true) {
                 // get client's name and send to server
                 String clientName = (String) JOptionPane.showInputDialog("Please enter your name");
-                
-                output.writeUTF(clientName);
-
+                out.writeObject(clientName);
                 // read server's response.
                 // if server's rejects name, notify client and repeat.
                 // if server accepts name, proceed.
-                serverResponse = input.readUTF();
+                serverResponse = (String) in.readObject();
                 if (serverResponse.equalsIgnoreCase("INVALID NAME. ALREADY IN USE".trim())) {
                     JOptionPane.showMessageDialog(rootPane, serverResponse, "Invalid Input", JOptionPane.ERROR_MESSAGE);
                 } else {
                     break;
                 }
             }
-
-            System.out.print(serverResponse);
-            text.append(serverResponse);
-
+            
+            
+            
             text.append("Enter message or " + DONE + " to exit client." + "\n");
+            
             UDPclient = new UDPClient(text, this);
             UDPclient.start();
+            new ServerListener().start();
             
         } catch (Exception e) {
             System.err.println("Exception occurred: (starting client) " + e.getMessage());
         }
     }
 
-    public void sendMessageTo(Connection receiver, String message) {
-        MessageTo messageTo = new MessageTo(receiver, message);
+    public void sendMessageTo(String receiver, String message) {
         try {
-            //output.writeObject(messageTo);
+            Message messageTo = new Message(message, MessageType.MESSAGETO, receiver);
+            out.writeObject(messageTo);
         } catch (Exception exception) {
-            System.err.println(exception.getMessage());
+            System.err.println("Exception occurred in sendMessageTo(): " + exception.getMessage());
         }
     }
 
     public void broadcastMessage(String message) {
-        BroadcastMessage broadcast = new BroadcastMessage(message);
         try {
-            //output.writeObject(broadcast);
+            Message broadcast = new Message(message, MessageType.BROADCAST);
+            out.writeObject(broadcast);
         } catch (Exception exception) {
-            System.err.println(exception.getMessage());
+            System.err.println("Exception occurred in broadcastMessage(): " + exception.getMessage());
         }
     }
-    
+
+    public void disconnectMessage() {
+        try {
+            Message dc = new Message("", MessageType.DISCONNECT);
+            out.writeObject(dc);
+        } catch (Exception exception) {
+            System.err.println("Exception occurred in disconnectMessage(): " + exception.getMessage());
+        }
+    }
+
     public void updateClientList(DefaultListModel clients) {
-        clientList = new JList(clients);
-        textPanel.remove(clientList);
-        textPanel.setRightComponent(clientList);
-        
+        clientList.setModel(clients);
+
         this.revalidate();
         this.repaint();
     }
 
     public void disconnect() {
+        disconnectMessage();
+        if (UDPclient != null) {
+            UDPclient.stopClient();
+        }
         text.setText("Connection closed. Please exit the Client.");
         try {
             if (input != null) {
@@ -193,12 +209,18 @@ public class Client extends JFrame implements ActionListener {
                 disconnect();
             } else {
                 try {
-                    output.writeUTF(clientRequest);
-                    String serverResponse = input.readUTF();
-                    System.out.print(serverResponse);
-                    text.append(serverResponse);
+                    if (receiver != null) {
+                        if (!receiver.equalsIgnoreCase("ALL")) {
+                            sendMessageTo(receiver, clientRequest);
+                        } else {
+                            broadcastMessage(clientRequest);
+                        }
+                    } else {
+                        broadcastMessage(clientRequest);
+                    }
+
                 } catch (Exception exception) {
-                    System.err.println(exception.getMessage());
+                    System.err.println("Exception occurred in actionPerformed(): " + exception.getMessage());
                 }
             }
             inputField.setText("");
@@ -206,17 +228,15 @@ public class Client extends JFrame implements ActionListener {
     }
 
     @Override
-    public void dispose() {
-        clientRequest = "done";
-        try {
-            output.writeUTF(clientRequest);
-            if (UDPclient != null) {
-                UDPclient.stopClient();
-            }
-
-        } catch (Exception exception) {
-            System.err.println(exception.getMessage());
+    public void valueChanged(ListSelectionEvent e) {
+        if (!e.getValueIsAdjusting()) {
+            receiver = String.valueOf(clientList.getSelectedValue());
+            System.out.println(receiver);
         }
+    }
+
+    @Override
+    public void dispose() {
         disconnect();
 
         super.dispose();
@@ -228,4 +248,22 @@ public class Client extends JFrame implements ActionListener {
 
         client.startClient();
     }
+
+    class ServerListener extends Thread {
+
+        public void run() {
+            while (true) {
+                try {
+                    String message = (String) in.readObject();
+                    text.append(message + "\n");
+                } catch (IOException ex) {
+                    System.out.println("Connection has been closed.");
+                    break;
+                } catch (ClassNotFoundException ex) {
+                    Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        }
+    }
+
 }

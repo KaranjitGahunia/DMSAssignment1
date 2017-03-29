@@ -11,7 +11,6 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Iterator;
 import javax.swing.JTextArea;
 
 /**
@@ -21,8 +20,10 @@ import javax.swing.JTextArea;
 public class Connection extends Thread {
 
     final String DONE = "done";
-    DataInputStream in;
-    DataOutputStream out;
+    DataInputStream input;
+    DataOutputStream output;
+    ObjectOutputStream out;
+    ObjectInputStream in;
     Socket clientSocket;
     Message message;
     JTextArea text;
@@ -32,8 +33,8 @@ public class Connection extends Thread {
     public Connection(Socket socket, JTextArea text, ArrayList connections) {
         try {
             clientSocket = socket;
-            in = new DataInputStream(clientSocket.getInputStream());
-            out = new DataOutputStream(clientSocket.getOutputStream());
+            out = new ObjectOutputStream(socket.getOutputStream());
+            in = new ObjectInputStream(socket.getInputStream());
             this.text = text;
             this.connections = connections;
             this.start();
@@ -46,48 +47,57 @@ public class Connection extends Thread {
     public void run() {
         try {
             String clientRequest = "";
+            String serverResponse = "";
             clientName = null;
 
-            while (clientRequest != null && !DONE.equalsIgnoreCase(clientRequest.trim())) {
-                //message = (Message) in.readObject();
-                String serverResponse = "From " + clientSocket.getInetAddress() + ": ";
-
-                clientRequest = in.readUTF();
-
-                if (clientName == null) {
-                    if (uniqueName(clientRequest)) {
-                        serverResponse = "Set " + clientSocket.getInetAddress() + " client name to " + clientRequest + "\n";
-                        clientName = clientRequest;
-                    } else {
-                        serverResponse = "INVALID NAME. ALREADY IN USE \n";
-                    }
-
+            if (clientName == null) {
+                clientRequest = (String) in.readObject();
+                if (uniqueName(clientRequest)) {
+                    serverResponse = "Set " + clientSocket.getInetAddress() + " client name to " + clientRequest + "\n";
+                    clientName = clientRequest;
                 } else {
-                    serverResponse = "From " + clientName + "[" + clientSocket.getInetAddress() + "]: " + clientRequest + "\n";
+                    serverResponse = "INVALID NAME. ALREADY IN USE";
                 }
-
-                text.append(serverResponse);
-
-                System.out.println(serverResponse);
-                for (Connection connection : connections) {
-                    connection.out.writeUTF(serverResponse);
-                }
-
-//                if (message instanceof MessageTo) {
-//                    Connection receiver = message.getReceiver();
-//                    receiver.out.writeUTF(serverResponse);
-//                } else if (message instanceof BroadcastMessage) {
-//                    for (Connection connection : connections) {
-//                        connection.out.writeUTF(serverResponse);
-//                    }
-//                } else if (message instanceof DisconnectMessage) {
-//
-//                }
+                out.writeObject(serverResponse);
             }
 
-            System.out.println("Closing Connection with " + clientSocket.getInetAddress());
-            text.append("Closing Connection with " + clientSocket.getInetAddress());
-            connections.remove(this);
+            while (clientRequest != null && !DONE.equalsIgnoreCase(clientRequest.trim())) {
+                if (in.readObject() instanceof Message) {
+                    message = (Message) in.readObject();
+                    serverResponse = message.getMessage();
+
+                    switch (message.getType()) {
+                        case MESSAGETO:
+                            for (Connection connection : connections) {
+                                if (connection.clientName.equalsIgnoreCase(message.getReceiver().trim())) {
+                                    connection.out.writeObject("From " + clientName + ": " + serverResponse);
+                                }
+                            }
+                            break;
+                        case BROADCAST:
+                            for (Connection connection : connections) {
+                                connection.out.writeObject("From " + clientName + ": " + serverResponse);
+                            }
+                            break;
+                        case DISCONNECT:
+                            System.out.println("Closing Connection with " + clientSocket.getInetAddress());
+                            String disconnectMsg = "Closing Connection with " + clientSocket.getInetAddress();
+                            for (Connection connection : connections) {
+                                connection.out.writeUTF(disconnectMsg);
+                            }
+                            for (Connection connection : connections) {
+                                if (connection.clientName.equalsIgnoreCase(clientName)) {
+                                    connections.remove(connection);
+                                }
+
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+                }
+
+            }
 
         } catch (Exception e) {
 
@@ -95,15 +105,12 @@ public class Connection extends Thread {
     }
 
     private boolean uniqueName(String name) {
-        if (Server.connections.isEmpty()) {
-            System.out.println("Name is unique");
+        if (connections.isEmpty()) {
             return true;
         }
         for (Connection connection : connections) {
-            System.out.println("Comparing: " + connection.clientName + " " + name);
             if (!connection.equals(this)) {
                 if (connection.clientName.equalsIgnoreCase(name)) {
-                    System.out.println("Name isn't unique");
                     return false;
                 }
             }

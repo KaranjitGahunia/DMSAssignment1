@@ -5,19 +5,39 @@
  */
 package dms.assignment.pkg1;
 
+import java.io.Serializable;
+
 /**
  *
  * @author Alex
  */
-public abstract class Message {
-    protected String message;
-    protected String sender;
-    
-    public String getMessage(){
+public class Message implements Serializable {
+
+    private String message;
+    private String receiver;
+    private MessageType type;
+
+    public Message(String message, MessageType type) {
+        this.message = message;
+        this.type = type;
+    }
+
+    public Message(String message, MessageType type, String receiver) {
+        this.message = message;
+        this.type = type;
+        this.receiver = receiver;
+    }
+
+    public String getMessage() {
         return message;
     }
-    
-    public String getSender(){
-        return sender;
+
+    public String getReceiver() {
+        return receiver;
     }
+    
+    public MessageType getType() {
+        return type;
+    }
+
 }

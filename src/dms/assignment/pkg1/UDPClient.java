@@ -41,23 +41,25 @@ public class UDPClient extends Thread {
         DatagramSocket aSocket = null;
         try {
             while (run) {
-                sleep(10000);
+                sleep(5000);
                 aSocket = new DatagramSocket();
-                byte[] buffer = new byte[100];
-                String m = "";
-                DatagramPacket request = new DatagramPacket(m.getBytes(),
-                        m.length(), InetAddress.getLocalHost(), 8765);
+                byte[] buffer = new byte[1000];
+                DatagramPacket request = new DatagramPacket("".getBytes(),
+                        "".length(), InetAddress.getLocalHost(), 8765);
                 aSocket.send(request);
 
                 DatagramPacket serverMessage = new DatagramPacket(buffer, buffer.length);
                 aSocket.receive(serverMessage);
-                text.append(new String(serverMessage.getData()).trim() + "\n");
                 clients = new DefaultListModel<>();
                 
                 String[] array = new String(serverMessage.getData()).trim().split(" ");
                 
                 for (String s : array) {
-                    clients.addElement(s);
+                    if (!s.equalsIgnoreCase("null")) {
+                        
+                        clients.addElement(s);
+                    }
+                    
                 }
                 
                 client.updateClientList(clients);

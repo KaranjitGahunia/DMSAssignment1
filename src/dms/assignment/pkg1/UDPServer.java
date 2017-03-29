@@ -27,29 +27,42 @@ public class UDPServer extends Thread {
 
     public String printConnections() {
         String output = "";
-        Iterator<Connection> connectionsIterator = connections.iterator();
-        Connection current;
-        while (connectionsIterator.hasNext()) {
-            current = connectionsIterator.next();
-            output += current.toString() + " ";
+        if (connections != null) {
+            Iterator<Connection> connectionsIterator = connections.iterator();
+            Connection current;
+            while (connectionsIterator.hasNext()) {
+                current = connectionsIterator.next();
+                output += current.toString() + " ";
+            }
         }
+
         return output;
     }
 
     public void run() {
         DatagramSocket aSocket = null;
         try {
-            sleep(10000);
+
             aSocket = new DatagramSocket(8765);
             byte[] buffer = new byte[100];
+            int connectionSize = 0;
             while (true) {
-                DatagramPacket request = new DatagramPacket(buffer, buffer.length);
-                aSocket.receive(request);
+                if (connections != null) {
+                    if (connectionSize != connections.size()) {
+                        DatagramPacket request = new DatagramPacket(buffer, buffer.length);
+                        aSocket.receive(request);
 
-                String serverResponse = printConnections();
-                DatagramPacket serverMessage = new DatagramPacket(serverResponse.getBytes(),
-                        serverResponse.length(), request.getAddress(), request.getPort());
-                aSocket.send(serverMessage);
+                        String serverResponse = "ALL " + printConnections();
+                        DatagramPacket serverMessage = new DatagramPacket(serverResponse.getBytes(),
+                                serverResponse.length(), request.getAddress(), request.getPort());
+                        aSocket.send(serverMessage);
+                    } else {
+                        sleep(5000);
+                    }
+                    System.out.println(connectionSize + " " + connections.size());
+                    connectionSize = connections.size();
+                }
+
             }
         } catch (SocketException e) {
             System.out.println("Socket: " + e.getMessage());

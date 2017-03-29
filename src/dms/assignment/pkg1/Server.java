@@ -12,7 +12,6 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Iterator;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -25,8 +24,9 @@ import javax.swing.JTextArea;
 public class Server extends JPanel {
 
     final int PORT = 8765;
-    public static ArrayList<Connection> connections;
+    public ArrayList<Connection> connections;
     public JTextArea text;
+    UDPServer UDPserver;
     private JScrollPane scrollpane;
 
     public Server() {
@@ -49,9 +49,6 @@ public class Server extends JPanel {
             serverSocket = new ServerSocket(PORT);
             System.out.println("Server started at " + InetAddress.getLocalHost() + " on port " + PORT);
             text.append("Server started at " + InetAddress.getLocalHost() + " on port " + PORT + "\n");
-
-            UDPServer UDPserver = new UDPServer(connections);
-            UDPserver.start();
         } catch (Exception e) {
             System.err.println(e.getMessage());
         }
@@ -62,6 +59,10 @@ public class Server extends JPanel {
                 text.append("Connection made with " + socket.getInetAddress() + "\n");
                 Connection connection = new Connection(socket, text, connections);
                 connections.add(connection);
+                if (UDPserver == null) {
+                    UDPserver = new UDPServer(connections);
+                    UDPserver.start();
+                }
 
             } catch (Exception e) {
                 stopServer = true;
