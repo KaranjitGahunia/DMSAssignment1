@@ -24,10 +24,12 @@ public class UDPClient extends Thread {
     JTextArea text;
     DefaultListModel<String> clients;
     JList clientList;
+    Client client;
     public boolean run;
 
-    public UDPClient(JTextArea text) {
+    public UDPClient(JTextArea text, Client client) {
         this.text = text;
+        this.client = client;
         run = true;
     }
 
@@ -50,6 +52,15 @@ public class UDPClient extends Thread {
                 DatagramPacket serverMessage = new DatagramPacket(buffer, buffer.length);
                 aSocket.receive(serverMessage);
                 text.append(new String(serverMessage.getData()).trim() + "\n");
+                clients = new DefaultListModel<>();
+                
+                String[] array = new String(serverMessage.getData()).trim().split(" ");
+                
+                for (String s : array) {
+                    clients.addElement(s);
+                }
+                
+                client.updateClientList(clients);
             }
 
         } catch (SocketException e) {

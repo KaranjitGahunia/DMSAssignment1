@@ -59,7 +59,7 @@ public class Connection extends Thread {
                         serverResponse = "Set " + clientSocket.getInetAddress() + " client name to " + clientRequest + "\n";
                         clientName = clientRequest;
                     } else {
-                        serverResponse = "INVALID NAME. ALREADY IN USE";
+                        serverResponse = "INVALID NAME. ALREADY IN USE \n";
                     }
 
                 } else {
@@ -114,6 +114,6 @@ public class Connection extends Thread {
     }
 
     public String toString() {
-        return clientName + " [" + clientSocket.getInetAddress() + "]";
+        return clientName;
     }
 }

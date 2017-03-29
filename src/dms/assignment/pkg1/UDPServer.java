@@ -11,40 +11,57 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
 import java.util.ArrayList;
+import java.util.Iterator;
 
 /**
  *
  * @author Alex
  */
-public class UDPServer extends Thread{
+public class UDPServer extends Thread {
+
     ArrayList<Connection> connections;
-    
+
     public UDPServer(ArrayList connections) {
         this.connections = connections;
     }
-    
+
+    public String printConnections() {
+        String output = "";
+        Iterator<Connection> connectionsIterator = connections.iterator();
+        Connection current;
+        while (connectionsIterator.hasNext()) {
+            current = connectionsIterator.next();
+            output += current.toString() + " ";
+        }
+        return output;
+    }
+
     public void run() {
         DatagramSocket aSocket = null;
-        try{
+        try {
             sleep(10000);
             aSocket = new DatagramSocket(8765);
             byte[] buffer = new byte[100];
-            while(true){
+            while (true) {
                 DatagramPacket request = new DatagramPacket(buffer, buffer.length);
-                aSocket.receive(request);               
-                
-                String serverResponse = "Client List: " + Server.printConnections();
+                aSocket.receive(request);
+
+                String serverResponse = printConnections();
                 DatagramPacket serverMessage = new DatagramPacket(serverResponse.getBytes(),
                         serverResponse.length(), request.getAddress(), request.getPort());
                 aSocket.send(serverMessage);
             }
+        } catch (SocketException e) {
+            System.out.println("Socket: " + e.getMessage());
+        } catch (IOException e) {
+            System.out.println("IO: " + e.getMessage());
+        } catch (InterruptedException e) {
+            System.out.println("Socket: " + e.getMessage());
+        } finally {
+            if (aSocket != null) {
+                aSocket.close();
+            }
         }
-        catch (SocketException e){System.out.println("Socket: " + e.getMessage());}
-        catch (IOException e) {System.out.println("IO: " + e.getMessage());} 
-        catch (InterruptedException e) { System.out.println("Socket: " + e.getMessage());}
-        finally {if(aSocket != null) aSocket.close();}
     }
-    
-    
-}
 
+}

@@ -54,8 +54,6 @@ public class Client extends JFrame implements ActionListener {
     public JPanel inputPanel;
     public JTextField inputField;
     public JButton confirm;
-    public JPanel clientPanel;
-    public JLabel clientLabel;
     public JList clientList;
 
     public Client(String name) {
@@ -81,12 +79,7 @@ public class Client extends JFrame implements ActionListener {
         scrollpane = new JScrollPane(text);
         scrollpane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
 
-        clientPanel = new JPanel();
-        clientLabel = new JLabel("Client List: ");
-        
         clientList = new JList();
-        clientPanel.add(clientLabel, BorderLayout.PAGE_START);
-        clientPanel.add(clientList, BorderLayout.PAGE_END);
 
         textPanel.setLeftComponent(scrollpane);
         textPanel.setRightComponent(clientList);
@@ -139,7 +132,7 @@ public class Client extends JFrame implements ActionListener {
             text.append(serverResponse);
 
             text.append("Enter message or " + DONE + " to exit client." + "\n");
-            UDPclient = new UDPClient(text);
+            UDPclient = new UDPClient(text, this);
             UDPclient.start();
             
         } catch (Exception e) {
@@ -163,6 +156,15 @@ public class Client extends JFrame implements ActionListener {
         } catch (Exception exception) {
             System.err.println(exception.getMessage());
         }
+    }
+    
+    public void updateClientList(DefaultListModel clients) {
+        clientList = new JList(clients);
+        textPanel.remove(clientList);
+        textPanel.setRightComponent(clientList);
+        
+        this.revalidate();
+        this.repaint();
     }
 
     public void disconnect() {

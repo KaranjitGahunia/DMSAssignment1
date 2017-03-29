@@ -49,6 +49,9 @@ public class Server extends JPanel {
             serverSocket = new ServerSocket(PORT);
             System.out.println("Server started at " + InetAddress.getLocalHost() + " on port " + PORT);
             text.append("Server started at " + InetAddress.getLocalHost() + " on port " + PORT + "\n");
+
+            UDPServer UDPserver = new UDPServer(connections);
+            UDPserver.start();
         } catch (Exception e) {
             System.err.println(e.getMessage());
         }
@@ -60,8 +63,6 @@ public class Server extends JPanel {
                 Connection connection = new Connection(socket, text, connections);
                 connections.add(connection);
 
-                UDPServer UDPserver = new UDPServer(connections);
-                UDPserver.start();
             } catch (Exception e) {
                 stopServer = true;
                 System.err.println(e.getMessage());
@@ -72,17 +73,6 @@ public class Server extends JPanel {
         } catch (Exception e) {
             System.err.println(e.getMessage());
         }
-    }
-
-    public static String printConnections() {
-        String output = "";
-        Iterator<Connection> connectionsIterator = connections.iterator();
-        Connection current;
-        while (connectionsIterator.hasNext()) {
-            current = connectionsIterator.next();
-            output += current.toString() + ", ";
-        }
-        return output;
     }
 
     public static void main(String args[]) {
