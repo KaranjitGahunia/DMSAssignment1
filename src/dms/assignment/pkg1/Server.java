@@ -8,13 +8,9 @@ package dms.assignment.pkg1;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Point;
-import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import javax.swing.JFrame;
@@ -30,7 +26,6 @@ public class Server extends JPanel {
 
     final int PORT = 8765;
     public static ArrayList<Connection> connections;
-    public static ArrayList<String> clientNames;
     public JTextArea text;
     private JScrollPane scrollpane;
 
@@ -62,10 +57,10 @@ public class Server extends JPanel {
                 Socket socket = serverSocket.accept();
                 System.out.println("Connection made with " + socket.getInetAddress());
                 text.append("Connection made with " + socket.getInetAddress() + "\n");
-                Connection connection = new Connection(socket, text);
+                Connection connection = new Connection(socket, text, connections);
                 connections.add(connection);
-                
-                UDPServer UDPserver = new UDPServer();
+
+                UDPServer UDPserver = new UDPServer(connections);
                 UDPserver.start();
             } catch (Exception e) {
                 stopServer = true;

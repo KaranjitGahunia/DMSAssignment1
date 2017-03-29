@@ -6,10 +6,13 @@
 package dms.assignment.pkg1;
 
 import java.io.IOException;
+import static java.lang.Thread.sleep;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
+import javax.swing.DefaultListModel;
+import javax.swing.JList;
 import javax.swing.JTextArea;
 
 /**
@@ -19,13 +22,15 @@ import javax.swing.JTextArea;
 public class UDPClient extends Thread {
 
     JTextArea text;
+    DefaultListModel<String> clients;
+    JList clientList;
     public boolean run;
 
     public UDPClient(JTextArea text) {
         this.text = text;
         run = true;
     }
-    
+
     public void stopClient() {
         run = false;
     }
@@ -61,3 +66,4 @@ public class UDPClient extends Thread {
     }
 
 }
+

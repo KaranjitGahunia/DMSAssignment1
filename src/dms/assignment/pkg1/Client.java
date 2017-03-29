@@ -15,13 +15,18 @@ import java.io.DataOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.ListModel;
 
 /**
  *
@@ -36,20 +41,25 @@ public class Client extends JFrame implements ActionListener {
     public static final String HOST_NAME = "localhost";
     final String DONE = "done";
     String clientRequest;
-    ObjectOutputStream output;
-    ObjectInputStream input;
+    DataOutputStream output;
+    DataInputStream input;
     Socket socket;
     UDPClient UDPclient;
+    DefaultListModel<String> clients;
 
     public JPanel panel;
-    public JPanel textPanel;
+    public JSplitPane textPanel;
     public JScrollPane scrollpane;
     public JTextArea text;
     public JPanel inputPanel;
     public JTextField inputField;
     public JButton confirm;
+    public JPanel clientPanel;
+    public JLabel clientLabel;
+    public JList clientList;
 
-    public Client() {
+    public Client(String name) {
+        super(name);
         setPreferredSize(new Dimension(500, 400));
 
         this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -62,16 +72,26 @@ public class Client extends JFrame implements ActionListener {
 
         panel = new JPanel(new BorderLayout());
         add(panel);
-
-        textPanel = new JPanel();
-        panel.add(textPanel, BorderLayout.PAGE_START);
+        
+        textPanel = new JSplitPane();
+        panel.add(textPanel);
 
         text = new JTextArea();
         text.setEditable(false);
         scrollpane = new JScrollPane(text);
         scrollpane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
 
-        panel.add(scrollpane);
+        clientPanel = new JPanel();
+        clientLabel = new JLabel("Client List: ");
+        
+        clientList = new JList();
+        clientPanel.add(clientLabel, BorderLayout.PAGE_START);
+        clientPanel.add(clientList, BorderLayout.PAGE_END);
+
+        textPanel.setLeftComponent(scrollpane);
+        textPanel.setRightComponent(clientList);
+        textPanel.setResizeWeight(0.8);
+        textPanel.setDividerLocation(0.8);
 
         inputPanel = new JPanel();
         panel.add(inputPanel, BorderLayout.PAGE_END);
@@ -94,20 +114,21 @@ public class Client extends JFrame implements ActionListener {
         }
 
         try {
+            output = new DataOutputStream(socket.getOutputStream());
+            input = new DataInputStream(socket.getInputStream());
             // setting output and input streams
-            output = new ObjectOutputStream(socket.getOutputStream());
-            input = new ObjectInputStream(socket.getInputStream());
             String serverResponse = null;
             while (true) {
                 // get client's name and send to server
                 String clientName = (String) JOptionPane.showInputDialog("Please enter your name");
-                output.writeObject(clientName);
+                
+                output.writeUTF(clientName);
 
                 // read server's response.
                 // if server's rejects name, notify client and repeat.
                 // if server accepts name, proceed.
-                serverResponse = (String) input.readObject();
-                if (serverResponse.equals("INVALID NAME. ALREADY IN USE")) {
+                serverResponse = input.readUTF();
+                if (serverResponse.equalsIgnoreCase("INVALID NAME. ALREADY IN USE".trim())) {
                     JOptionPane.showMessageDialog(rootPane, serverResponse, "Invalid Input", JOptionPane.ERROR_MESSAGE);
                 } else {
                     break;
@@ -120,8 +141,44 @@ public class Client extends JFrame implements ActionListener {
             text.append("Enter message or " + DONE + " to exit client." + "\n");
             UDPclient = new UDPClient(text);
             UDPclient.start();
+            
         } catch (Exception e) {
             System.err.println("Exception occurred: (starting client) " + e.getMessage());
+        }
+    }
+
+    public void sendMessageTo(Connection receiver, String message) {
+        MessageTo messageTo = new MessageTo(receiver, message);
+        try {
+            //output.writeObject(messageTo);
+        } catch (Exception exception) {
+            System.err.println(exception.getMessage());
+        }
+    }
+
+    public void broadcastMessage(String message) {
+        BroadcastMessage broadcast = new BroadcastMessage(message);
+        try {
+            //output.writeObject(broadcast);
+        } catch (Exception exception) {
+            System.err.println(exception.getMessage());
+        }
+    }
+
+    public void disconnect() {
+        text.setText("Connection closed. Please exit the Client.");
+        try {
+            if (input != null) {
+                input.close();
+            }
+            if (output != null) {
+                output.close();
+            }
+            if (socket != null) {
+                socket.close();
+            }
+        } catch (Exception exception) {
+            System.err.println(exception.getMessage());
         }
     }
 
@@ -131,20 +188,7 @@ public class Client extends JFrame implements ActionListener {
         if (source == confirm) {
             clientRequest = inputField.getText();
             if (DONE.equalsIgnoreCase(clientRequest.trim())) {
-                text.setText("Connection closed. Please exit the Client.");
-                try {
-                    if (input != null) {
-                        input.close();
-                    }
-                    if (output != null) {
-                        output.close();
-                    }
-                    if (socket != null) {
-                        socket.close();
-                    }
-                } catch (Exception exception) {
-                    System.err.println(exception.getMessage());
-                }
+                disconnect();
             } else {
                 try {
                     output.writeUTF(clientRequest);
@@ -164,30 +208,21 @@ public class Client extends JFrame implements ActionListener {
         clientRequest = "done";
         try {
             output.writeUTF(clientRequest);
-            UDPclient.stopClient();
+            if (UDPclient != null) {
+                UDPclient.stopClient();
+            }
+
         } catch (Exception exception) {
             System.err.println(exception.getMessage());
         }
-        try {
-            if (input != null) {
-                input.close();
-            }
-            if (output != null) {
-                output.close();
-            }
-            if (socket != null) {
-                socket.close();
-            }
-        } catch (Exception exception) {
-            System.err.println("Exception occurred: (dispose) " + exception.getMessage());
-        }
+        disconnect();
 
         super.dispose();
         System.exit(0);
     }
 
     public static void main(String args[]) {
-        Client client = new Client();
+        Client client = new Client("Client");
 
         client.startClient();
     }

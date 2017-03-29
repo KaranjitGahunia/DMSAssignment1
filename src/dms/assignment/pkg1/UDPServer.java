@@ -5,23 +5,23 @@
  */
 package dms.assignment.pkg1;
 
-import static dms.assignment.pkg1.Server.connections;
 import java.io.IOException;
+import static java.lang.Thread.sleep;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
-import javax.swing.JTextArea;
+import java.util.ArrayList;
 
 /**
  *
  * @author Alex
  */
 public class UDPServer extends Thread{
-//    JTextArea text;
-//    
-//    public UDPServer(JTextArea text) {
-//        this.text = text;
-//    }
+    ArrayList<Connection> connections;
+    
+    public UDPServer(ArrayList connections) {
+        this.connections = connections;
+    }
     
     public void run() {
         DatagramSocket aSocket = null;
@@ -47,3 +47,4 @@ public class UDPServer extends Thread{
     
     
 }
+

@@ -5,11 +5,12 @@
  */
 package dms.assignment.pkg1;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.Iterator;
 import javax.swing.JTextArea;
 
@@ -20,19 +21,21 @@ import javax.swing.JTextArea;
 public class Connection extends Thread {
 
     final String DONE = "done";
-    ObjectInputStream in;
-    ObjectOutputStream out;
+    DataInputStream in;
+    DataOutputStream out;
     Socket clientSocket;
-    JTextArea text;
-    String clientName;
     Message message;
+    JTextArea text;
+    ArrayList<Connection> connections;
+    String clientName;
 
-    public Connection(Socket socket, JTextArea text) {
+    public Connection(Socket socket, JTextArea text, ArrayList connections) {
         try {
             clientSocket = socket;
-            in = new ObjectInputStream(clientSocket.getInputStream());
-            out = new ObjectOutputStream(clientSocket.getOutputStream());
+            in = new DataInputStream(clientSocket.getInputStream());
+            out = new DataOutputStream(clientSocket.getOutputStream());
             this.text = text;
+            this.connections = connections;
             this.start();
         } catch (Exception e) {
 
@@ -43,10 +46,14 @@ public class Connection extends Thread {
     public void run() {
         try {
             String clientRequest = "";
+            clientName = null;
 
             while (clientRequest != null && !DONE.equalsIgnoreCase(clientRequest.trim())) {
-                String serverResponse = null;
-                clientRequest = (String) in.readObject();
+                //message = (Message) in.readObject();
+                String serverResponse = "From " + clientSocket.getInetAddress() + ": ";
+
+                clientRequest = in.readUTF();
+
                 if (clientName == null) {
                     if (uniqueName(clientRequest)) {
                         serverResponse = "Set " + clientSocket.getInetAddress() + " client name to " + clientRequest + "\n";
@@ -54,24 +61,33 @@ public class Connection extends Thread {
                     } else {
                         serverResponse = "INVALID NAME. ALREADY IN USE";
                     }
+
                 } else {
                     serverResponse = "From " + clientName + "[" + clientSocket.getInetAddress() + "]: " + clientRequest + "\n";
                 }
 
-                if (message instanceof MessageTo) {
-                    Connection receiver = message.getReceiver();
-                    receiver.out.writeUTF(serverResponse);
-                } else if (message instanceof BroadcastMessage) {
-                    for (Connection connection : Server.connections) {
-                        connection.out.writeUTF(serverResponse);
-                    }
-                } else if (message instanceof DisconnectMessage) {
+                text.append(serverResponse);
 
+                System.out.println(serverResponse);
+                for (Connection connection : connections) {
+                    connection.out.writeUTF(serverResponse);
                 }
+
+//                if (message instanceof MessageTo) {
+//                    Connection receiver = message.getReceiver();
+//                    receiver.out.writeUTF(serverResponse);
+//                } else if (message instanceof BroadcastMessage) {
+//                    for (Connection connection : connections) {
+//                        connection.out.writeUTF(serverResponse);
+//                    }
+//                } else if (message instanceof DisconnectMessage) {
+//
+//                }
             }
+
             System.out.println("Closing Connection with " + clientSocket.getInetAddress());
             text.append("Closing Connection with " + clientSocket.getInetAddress());
-            Server.connections.remove(this);
+            connections.remove(this);
 
         } catch (Exception e) {
 
@@ -79,23 +95,22 @@ public class Connection extends Thread {
     }
 
     private boolean uniqueName(String name) {
-//        if (Server.connections.isEmpty()) {
-//            System.out.println("Name is unique");
-//            return true;
-//        }
-//        Iterator<Connection> iterator = Server.connections.iterator();
-//        while (iterator.hasNext()) {
-//            System.out.println("Searching through connections");
-//            if (iterator.next().clientName.equalsIgnoreCase(name)) {
-//                System.out.println("Name isn't unique");
-//                return false;
-//            }
-//        }
-//        System.out.println("Name is unique");
-        if (name.equalsIgnoreCase("Karanjit")) {
+        if (Server.connections.isEmpty()) {
+            System.out.println("Name is unique");
             return true;
         }
-        return false;
+        for (Connection connection : connections) {
+            System.out.println("Comparing: " + connection.clientName + " " + name);
+            if (!connection.equals(this)) {
+                if (connection.clientName.equalsIgnoreCase(name)) {
+                    System.out.println("Name isn't unique");
+                    return false;
+                }
+            }
+        }
+        System.out.println("Name is unique");
+
+        return true;
     }
 
     public String toString() {
