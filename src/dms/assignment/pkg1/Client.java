@@ -7,21 +7,17 @@ package dms.assignment.pkg1;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.net.SocketException;
-import java.util.Scanner;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
@@ -40,8 +36,8 @@ public class Client extends JFrame implements ActionListener {
     public static final String HOST_NAME = "localhost";
     final String DONE = "done";
     String clientRequest;
-    DataOutputStream output;
-    DataInputStream input;
+    ObjectOutputStream output;
+    ObjectInputStream input;
     Socket socket;
     UDPClient UDPclient;
 
@@ -58,6 +54,11 @@ public class Client extends JFrame implements ActionListener {
 
         this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         this.setResizable(true);
+        this.setLocationRelativeTo(null);
+        Point p = this.getLocation();
+        p.x = p.x - 250;
+        p.y = p.y - 200;
+        this.setLocation(p);
 
         panel = new JPanel(new BorderLayout());
         add(panel);
@@ -93,10 +94,30 @@ public class Client extends JFrame implements ActionListener {
         }
 
         try {
-            output = new DataOutputStream(socket.getOutputStream());
-            input = new DataInputStream(socket.getInputStream());
+            // setting output and input streams
+            output = new ObjectOutputStream(socket.getOutputStream());
+            input = new ObjectInputStream(socket.getInputStream());
+            String serverResponse = null;
+            while (true) {
+                // get client's name and send to server
+                String clientName = (String) JOptionPane.showInputDialog("Please enter your name");
+                output.writeObject(clientName);
+
+                // read server's response.
+                // if server's rejects name, notify client and repeat.
+                // if server accepts name, proceed.
+                serverResponse = (String) input.readObject();
+                if (serverResponse.equals("INVALID NAME. ALREADY IN USE")) {
+                    JOptionPane.showMessageDialog(rootPane, serverResponse, "Invalid Input", JOptionPane.ERROR_MESSAGE);
+                } else {
+                    break;
+                }
+            }
+
+            System.out.print(serverResponse);
+            text.append(serverResponse);
+
             text.append("Enter message or " + DONE + " to exit client." + "\n");
-            
             UDPclient = new UDPClient(text);
             UDPclient.start();
         } catch (Exception e) {

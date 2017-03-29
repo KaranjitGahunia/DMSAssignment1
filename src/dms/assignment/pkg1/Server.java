@@ -7,6 +7,7 @@ package dms.assignment.pkg1;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.Point;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -15,6 +16,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -28,6 +30,7 @@ public class Server extends JPanel {
 
     final int PORT = 8765;
     public static ArrayList<Connection> connections;
+    public static ArrayList<String> clientNames;
     public JTextArea text;
     private JScrollPane scrollpane;
 
@@ -75,8 +78,17 @@ public class Server extends JPanel {
             System.err.println(e.getMessage());
         }
     }
-    
-    
+
+    public static String printConnections() {
+        String output = "";
+        Iterator<Connection> connectionsIterator = connections.iterator();
+        Connection current;
+        while (connectionsIterator.hasNext()) {
+            current = connectionsIterator.next();
+            output += current.toString() + ", ";
+        }
+        return output;
+    }
 
     public static void main(String args[]) {
         Server server = new Server();
@@ -86,6 +98,11 @@ public class Server extends JPanel {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setResizable(true);
         frame.getContentPane().add(server);
+        frame.setLocationRelativeTo(null);
+        Point p = frame.getLocation();
+        p.x = p.x - 250;
+        p.y = p.y - 200;
+        frame.setLocation(p);
         frame.pack();
         frame.setVisible(true);
 

@@ -9,9 +9,13 @@ package dms.assignment.pkg1;
  *
  * @author Alex
  */
-public class MessageTo extends Message{
-    
-    public void privateMessage() {
-        
+public class MessageTo extends Message {
+
+    String message;
+    Connection receiver;
+
+    public MessageTo(Connection receiver, String message) {
+        this.receiver = receiver;
+        this.message = message;
     }
 }

@@ -10,6 +10,16 @@ package dms.assignment.pkg1;
  * @author Alex
  */
 public abstract class Message {
+
     private String message;
+    private Connection receiver;
+
+    public String getMessage() {
+        return message;
+    }
+
+    public Connection getReceiver() {
+        return receiver;
+    }
 
 }

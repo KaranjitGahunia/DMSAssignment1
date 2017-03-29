@@ -7,7 +7,10 @@ package dms.assignment.pkg1;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.Iterator;
 import javax.swing.JTextArea;
 
 /**
@@ -17,16 +20,18 @@ import javax.swing.JTextArea;
 public class Connection extends Thread {
 
     final String DONE = "done";
-    DataInputStream in;
-    DataOutputStream out;
+    ObjectInputStream in;
+    ObjectOutputStream out;
     Socket clientSocket;
     JTextArea text;
+    String clientName;
+    Message message;
 
     public Connection(Socket socket, JTextArea text) {
         try {
             clientSocket = socket;
-            in = new DataInputStream(clientSocket.getInputStream());
-            out = new DataOutputStream(clientSocket.getOutputStream());
+            in = new ObjectInputStream(clientSocket.getInputStream());
+            out = new ObjectOutputStream(clientSocket.getOutputStream());
             this.text = text;
             this.start();
         } catch (Exception e) {
@@ -38,18 +43,32 @@ public class Connection extends Thread {
     public void run() {
         try {
             String clientRequest = "";
-            
+
             while (clientRequest != null && !DONE.equalsIgnoreCase(clientRequest.trim())) {
-                clientRequest = in.readUTF() + "\n";
-                String serverResponse = "From " + clientSocket.getInetAddress() + ": " + clientRequest;
-                System.out.println(serverResponse);
-                text.append(serverResponse);
-                for (Connection connection : Server.connections) {
-                    connection.out.writeUTF(serverResponse);
+                String serverResponse = null;
+                clientRequest = (String) in.readObject();
+                if (clientName == null) {
+                    if (uniqueName(clientRequest)) {
+                        serverResponse = "Set " + clientSocket.getInetAddress() + " client name to " + clientRequest + "\n";
+                        clientName = clientRequest;
+                    } else {
+                        serverResponse = "INVALID NAME. ALREADY IN USE";
+                    }
+                } else {
+                    serverResponse = "From " + clientName + "[" + clientSocket.getInetAddress() + "]: " + clientRequest + "\n";
+                }
+
+                if (message instanceof MessageTo) {
+                    Connection receiver = message.getReceiver();
+                    receiver.out.writeUTF(serverResponse);
+                } else if (message instanceof BroadcastMessage) {
+                    for (Connection connection : Server.connections) {
+                        connection.out.writeUTF(serverResponse);
+                    }
+                } else if (message instanceof DisconnectMessage) {
+
                 }
             }
-            
-            
             System.out.println("Closing Connection with " + clientSocket.getInetAddress());
             text.append("Closing Connection with " + clientSocket.getInetAddress());
             Server.connections.remove(this);
@@ -57,5 +76,29 @@ public class Connection extends Thread {
         } catch (Exception e) {
 
         }
+    }
+
+    private boolean uniqueName(String name) {
+//        if (Server.connections.isEmpty()) {
+//            System.out.println("Name is unique");
+//            return true;
+//        }
+//        Iterator<Connection> iterator = Server.connections.iterator();
+//        while (iterator.hasNext()) {
+//            System.out.println("Searching through connections");
+//            if (iterator.next().clientName.equalsIgnoreCase(name)) {
+//                System.out.println("Name isn't unique");
+//                return false;
+//            }
+//        }
+//        System.out.println("Name is unique");
+        if (name.equalsIgnoreCase("Karanjit")) {
+            return true;
+        }
+        return false;
+    }
+
+    public String toString() {
+        return clientName + " [" + clientSocket.getInetAddress() + "]";
     }
 }

@@ -9,10 +9,12 @@ package dms.assignment.pkg1;
  *
  * @author Alex
  */
-public class BroadcastMessage extends Message{
-    
-    public void messageAll() {
-        
+public class BroadcastMessage extends Message {
+
+    String message;
+
+    public BroadcastMessage(String message) {
+        this.message = message;
     }
-    
+
 }
