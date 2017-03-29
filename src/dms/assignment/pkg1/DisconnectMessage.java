@@ -10,9 +10,10 @@ package dms.assignment.pkg1;
  * @author Alex
  */
 public class DisconnectMessage extends Message{
-    
-    public void notifyExit() {
-        
+
+    public DisconnectMessage(String sender) {
+        this.sender = sender;
+        this.message = sender + " has disconnected.";
     }
     
 }

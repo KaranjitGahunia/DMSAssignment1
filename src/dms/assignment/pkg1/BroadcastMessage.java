@@ -10,10 +10,10 @@ package dms.assignment.pkg1;
  * @author Alex
  */
 public class BroadcastMessage extends Message{
-    String message;
     
-    public BroadcastMessage(String message) {
+    public BroadcastMessage(String message, String sender){
         this.message = message;
+        this.sender = sender;
     }
-    
 }
+

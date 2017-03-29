@@ -10,12 +10,16 @@ package dms.assignment.pkg1;
  * @author Alex
  */
 public class MessageTo extends Message{
-    String message;
-    Connection receiver;
     
-    public MessageTo(Connection receiver, String message) {
+    private String receiver;
+    
+    public MessageTo(String sender, String message, String receiver){
+        this.sender = sender;
         this.receiver = receiver;
         this.message = message;
     }
     
+    public String getReceiver(){
+        return receiver;
+    }
 }
