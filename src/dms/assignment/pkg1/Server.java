@@ -15,6 +15,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -61,7 +62,7 @@ public class Server extends JPanel {
                 text.append("Connection made with " + socket.getInetAddress() + "\n");
                 Connection connection = new Connection(socket, text);
                 connections.add(connection);
-                
+
                 UDPServer UDPserver = new UDPServer();
                 UDPserver.start();
             } catch (Exception e) {
@@ -75,8 +76,17 @@ public class Server extends JPanel {
             System.err.println(e.getMessage());
         }
     }
-    
-    
+
+    public static String printConnections() {
+        String output = "";
+        Iterator<Connection> connectionsIterator = connections.iterator();
+        Connection current;
+        while (connectionsIterator.hasNext()) {
+            current = connectionsIterator.next();
+            output += current.toString() + ", ";
+        }
+        return output;
+    }
 
     public static void main(String args[]) {
         Server server = new Server();

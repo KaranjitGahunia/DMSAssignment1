@@ -22,6 +22,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
@@ -93,10 +94,30 @@ public class Client extends JFrame implements ActionListener {
         }
 
         try {
+            // setting output and input streams
             output = new DataOutputStream(socket.getOutputStream());
             input = new DataInputStream(socket.getInputStream());
+            String serverResponse = null;
+            while (true) {
+                // get client's name and send to server
+                String clientName = (String) JOptionPane.showInputDialog("Please enter your name");
+                output.writeUTF(clientName);
+
+                // read server's response.
+                // if server's rejects name, notify client and repeat.
+                // if server accepts name, proceed.
+                serverResponse = input.readUTF();
+                if (serverResponse.equals("INVALID NAME. ALREADY IN USE")) {
+                    JOptionPane.showMessageDialog(rootPane, serverResponse, "Invalid Input", JOptionPane.ERROR_MESSAGE);
+                } else {
+                    break;
+                }
+            }
+
+            System.out.print(serverResponse);
+            text.append(serverResponse);
+
             text.append("Enter message or " + DONE + " to exit client." + "\n");
-            
             UDPclient = new UDPClient(text);
             UDPclient.start();
         } catch (Exception e) {
