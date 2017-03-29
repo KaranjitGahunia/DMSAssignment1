@@ -7,6 +7,7 @@ package dms.assignment.pkg1;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.Point;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -29,6 +30,7 @@ public class Server extends JPanel {
 
     final int PORT = 8765;
     public static ArrayList<Connection> connections;
+    public static ArrayList<String> clientNames;
     public JTextArea text;
     private JScrollPane scrollpane;
 
@@ -62,7 +64,7 @@ public class Server extends JPanel {
                 text.append("Connection made with " + socket.getInetAddress() + "\n");
                 Connection connection = new Connection(socket, text);
                 connections.add(connection);
-
+                
                 UDPServer UDPserver = new UDPServer();
                 UDPserver.start();
             } catch (Exception e) {
@@ -96,6 +98,11 @@ public class Server extends JPanel {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setResizable(true);
         frame.getContentPane().add(server);
+        frame.setLocationRelativeTo(null);
+        Point p = frame.getLocation();
+        p.x = p.x - 250;
+        p.y = p.y - 200;
+        frame.setLocation(p);
         frame.pack();
         frame.setVisible(true);
 

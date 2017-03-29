@@ -7,6 +7,7 @@ package dms.assignment.pkg1;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.DataInputStream;
@@ -59,6 +60,11 @@ public class Client extends JFrame implements ActionListener {
 
         this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         this.setResizable(true);
+        this.setLocationRelativeTo(null);
+        Point p = this.getLocation();
+        p.x = p.x - 250;
+        p.y = p.y - 200;
+        this.setLocation(p);
 
         panel = new JPanel(new BorderLayout());
         add(panel);
