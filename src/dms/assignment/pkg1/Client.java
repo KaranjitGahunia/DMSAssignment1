@@ -95,35 +95,11 @@ public class Client extends JFrame implements ActionListener {
             output = new DataOutputStream(socket.getOutputStream());
             input = new DataInputStream(socket.getInputStream());
             text.append("Enter message or " + DONE + " to exit client." + "\n");
-
+            
+            UDPClient UDPclient = new UDPClient(text);
+            UDPclient.start();
         } catch (Exception e) {
             System.err.println("Exception occurred: (starting client) " + e.getMessage());
-        }
-    }
-
-    public void receiveServerMessage() {
-        DatagramSocket aSocket = null;
-        try {
-            aSocket = new DatagramSocket();
-            byte[] buffer = new byte[100];
-            System.out.println("SENDING MESSAGE");
-            String m = "";
-            DatagramPacket request = new DatagramPacket(m.getBytes(),
-                    m.length(), InetAddress.getLocalHost(), 8765);
-            aSocket.send(request);
-
-            DatagramPacket serverMessage = new DatagramPacket(buffer, buffer.length);
-            aSocket.receive(serverMessage);
-            System.out.println(new String(serverMessage.getData()).trim());
-
-        } catch (SocketException e) {
-            System.out.println("Socket: " + e.getMessage());
-        } catch (IOException e) {
-            System.out.println("Socket: " + e.getMessage());
-        } finally {
-            if (aSocket != null) {
-                aSocket.close();
-            }
         }
     }
 
@@ -158,8 +134,6 @@ public class Client extends JFrame implements ActionListener {
                 }
             }
             inputField.setText("");
-            
-            receiveServerMessage();
         }
     }
 
@@ -186,6 +160,7 @@ public class Client extends JFrame implements ActionListener {
         }
 
         super.dispose();
+        System.exit(0);
     }
 
     public static void main(String args[]) {

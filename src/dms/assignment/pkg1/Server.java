@@ -62,7 +62,8 @@ public class Server extends JPanel {
                 Connection connection = new Connection(socket, text);
                 connections.add(connection);
                 
-                sendServerMessage();
+                UDPServer UDPserver = new UDPServer();
+                UDPserver.start();
             } catch (Exception e) {
                 stopServer = true;
                 System.err.println(e.getMessage());
@@ -75,27 +76,7 @@ public class Server extends JPanel {
         }
     }
     
-    public void sendServerMessage() {
-        DatagramSocket aSocket = null;
-        try{
-            aSocket = new DatagramSocket(8765);
-            byte[] buffer = new byte[100];
-            while(true){
-                DatagramPacket request = new DatagramPacket(buffer, buffer.length);
-                aSocket.receive(request);               
-                
-                System.out.println("SENDING MESSAGE");
-                
-                String serverResponse = "Client List: " + connections.toString();
-                DatagramPacket serverMessage = new DatagramPacket(serverResponse.getBytes(),
-                        serverResponse.length(), request.getAddress(), request.getPort());
-                aSocket.send(serverMessage);
-            }
-        }
-        catch (SocketException e){System.out.println("Socket: " + e.getMessage());}
-        catch (IOException e) {System.out.println("IO: " + e.getMessage());}
-        finally {if(aSocket != null) aSocket.close();}
-    }
+    
 
     public static void main(String args[]) {
         Server server = new Server();
