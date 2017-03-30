@@ -23,10 +23,10 @@ import javax.swing.JTextArea;
  */
 public class Server extends JPanel {
 
-    final int PORT = 8765;
+    private final int PORT = 8765;
     public static List<Connection> connections;
-    public JTextArea text;
-    UDPServer UDPserver;
+    private JTextArea text;
+    private UDPServer UDPserver;
     private JScrollPane scrollpane;
 
     /**
@@ -47,7 +47,7 @@ public class Server extends JPanel {
      * started and stored in a list. This process repeats until the server is
      * stopped.
      */
-    public void startServer() {
+    private void startServer() {
         ServerSocket serverSocket = null;
         boolean stopServer = false;
         try {
@@ -72,7 +72,7 @@ public class Server extends JPanel {
             System.err.println(e.getMessage());
         }
     }
-
+    
     /**
      * Main method for Server class.
      * Sets up the JFrame and calls startServer method.

@@ -18,7 +18,7 @@ import java.util.List;
  */
 public class UDPServer extends Thread {
 
-    List<Connection> connections;
+    private List<Connection> connections;
 
     /**
      * Default constructor for this class. Initializes the connections list.
@@ -34,7 +34,7 @@ public class UDPServer extends Thread {
      *
      * @return
      */
-    public String printConnections() {
+    private String printConnections() {
         String output = "";
         if (connections != null) {
             Iterator<Connection> connectionsIterator = connections.iterator();

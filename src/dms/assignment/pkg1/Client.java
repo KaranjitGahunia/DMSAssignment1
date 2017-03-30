@@ -30,26 +30,26 @@ import javax.swing.event.ListSelectionListener;
  */
 public class Client extends JFrame implements ActionListener, ListSelectionListener {
 
-    public final int PORT = 8765;
-    public static final String HOST_NAME = "localhost";
-    public final String DONE = "done";
-    public String clientRequest;
-    public ObjectOutputStream out;
-    public ObjectInputStream in;
-    public Socket socket;
-    public UDPClient UDPclient;
-    public ServerListener listener;
-    public String receiver;
-    public String clientName;
+    private final int PORT = 8765;
+    private static final String HOST_NAME = "localhost";
+    private final String DONE = "done";
+    private String clientRequest;
+    private ObjectOutputStream out;
+    private ObjectInputStream in;
+    private Socket socket;
+    private UDPClient UDPclient;
+    private ServerListener listener;
+    private String receiver;
+    private String clientName;
 
-    public JPanel panel;
-    public JSplitPane textPanel;
-    public JScrollPane scrollpane;
-    public JTextArea text;
-    public JPanel inputPanel;
-    public JTextField inputField;
-    public JButton confirm;
-    public JList clientList;
+    private JPanel panel;
+    private JSplitPane textPanel;
+    private JScrollPane scrollpane;
+    private JTextArea text;
+    private JPanel inputPanel;
+    private JTextField inputField;
+    private JButton confirm;
+    private JList clientList;
 
     /**
      * default constructor for Client class. initializes the client objects.
@@ -106,7 +106,7 @@ public class Client extends JFrame implements ActionListener, ListSelectionListe
      * sends messages to other clients that are connected to the server. This
      * process repeats until the server is stopped.
      */
-    public void startClient() {
+    private void startClient() {
         try {
             socket = new Socket(HOST_NAME, PORT);
         } catch (IOException e) {
@@ -116,7 +116,7 @@ public class Client extends JFrame implements ActionListener, ListSelectionListe
             out = new ObjectOutputStream(socket.getOutputStream());
             in = new ObjectInputStream(socket.getInputStream());
             // setting output and input streams
-            String serverResponse = "";
+            String serverResponse;
             while (true) {
                 clientName = (String) JOptionPane.showInputDialog("Please enter your name");
                 out.writeObject(clientName);
@@ -144,7 +144,7 @@ public class Client extends JFrame implements ActionListener, ListSelectionListe
      * @param receiver
      * @param message
      */
-    public void sendMessageTo(String receiver, String message) {
+    private void sendMessageTo(String receiver, String message) {
         try {
             Message messageTo = new Message(message, MessageType.MESSAGETO, receiver);
             out.writeObject(messageTo);
@@ -159,7 +159,7 @@ public class Client extends JFrame implements ActionListener, ListSelectionListe
      *
      * @param message
      */
-    public synchronized void broadcastMessage(String message) {
+    private synchronized void broadcastMessage(String message) {
         try {
             Message broadcast = new Message(message, MessageType.BROADCAST);
             out.writeObject(broadcast);
@@ -172,13 +172,53 @@ public class Client extends JFrame implements ActionListener, ListSelectionListe
      * Method used to send a DISCONNECT type message. Creates a message of the
      * appropriate type and sends it to the appropriate client.
      */
-    public void disconnectMessage() {
+    private void disconnectMessage() {
         try {
             Message dc = new Message("Test", MessageType.DISCONNECT);
             out.writeObject(dc);
         } catch (IOException exception) {
             System.err.println("Exception occurred in disconnectMessage(): " + exception.getMessage());
         }
+    }
+
+    /**
+     * Calls disconnectMessage method and closes all input/output related
+     * variables.
+     */
+    private void disconnect() {
+        disconnectMessage();
+        System.out.println("DC MESSAGE SENT");
+        text.setText("Connection closed. Please exit the Client.\n");
+        try {
+            if (in != null) {
+                in.close();
+            }
+            if (out != null) {
+                out.close();
+            }
+            if (socket != null) {
+                socket.close();
+            }
+            if (UDPclient != null) {
+                UDPclient.stopClient();
+            }
+            if (listener != null) {
+                listener.stopListener();
+            }
+        } catch (IOException exception) {
+            System.err.println(exception.getMessage());
+        }
+    }
+
+    /**
+     * Override of the dispose method. Calls disconnect method.
+     */
+    @Override
+    public void dispose() {
+        disconnect();
+
+        super.dispose();
+        System.exit(0);
     }
 
     /**
@@ -198,35 +238,6 @@ public class Client extends JFrame implements ActionListener, ListSelectionListe
             clientList.setSelectedValue(selection, true);
         } else {
             clientList.setSelectedIndex(0);
-        }
-    }
-
-    /**
-     * Calls disconnectMessage method and closes all input/output related
-     * variables.
-     */
-    public void disconnect() {
-        disconnectMessage();
-        System.out.println("DC MESSAGE SENT");
-        text.setText("Connection closed. Please exit the Client.");
-        try {
-            if (in != null) {
-                in.close();
-            }
-            if (out != null) {
-                out.close();
-            }
-            if (socket != null) {
-                socket.close();
-            }
-            if (UDPclient != null) {
-                UDPclient.stopClient();
-            }
-            if (listener != null) {
-                listener.stopListener();
-            }
-        } catch (IOException exception) {
-            System.err.println(exception.getMessage());
         }
     }
 
@@ -274,21 +285,14 @@ public class Client extends JFrame implements ActionListener, ListSelectionListe
         }
     }
 
-    /**
-     * Override of the dispose method. Calls disconnect method.
-     */
-    @Override
-    public void dispose() {
-        disconnect();
-
-        super.dispose();
-        System.exit(0);
+    public String getClientName(){
+        return this.clientName;
     }
-
+    
     /**
-     * Main method for client class.
-     * Creates a client thread and starts it.
-     * @param args 
+     * Main method for client class. Creates a client thread and starts it.
+     *
+     * @param args
      */
     public static void main(String args[]) {
         Client client = new Client("Client");
@@ -299,19 +303,18 @@ public class Client extends JFrame implements ActionListener, ListSelectionListe
      * Private thread class used to receive TCP input from the Server.
      */
     private class ServerListener extends Thread {
+
         boolean run;
 
         /**
-         * Sets boolean run to false.
-         * Used to terminate thread.
+         * Sets boolean run to false. Used to terminate thread.
          */
         public void stopListener() {
             this.run = false;
         }
 
         /**
-         * Run method for thread.
-         * Repeatedly accepts input from Server.
+         * Run method for thread. Repeatedly accepts input from Server.
          * Terminates when boolean run is false.
          */
         @Override

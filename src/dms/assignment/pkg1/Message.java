@@ -3,9 +3,10 @@ package dms.assignment.pkg1;
 import java.io.Serializable;
 
 /**
- * Class used to hold information regarding messages that are sent between clients.
- * Contains the message, the recipients, and the type of the message.
+ * Class used to hold information regarding messages that are sent between
+ * clients. Contains the message, the recipients, and the type of the message.
  * Message objects are sent between clients and the server.
+ *
  * @author Alex
  */
 public class Message implements Serializable {
@@ -15,10 +16,11 @@ public class Message implements Serializable {
     private MessageType type;
 
     /**
-     * Constructor for Message. Initializes the message and type variables.
-     * This constructor is used for BROADCAST and DISCONNECT type Message objects.
+     * Constructor for Message. Initializes the message and type variables. This
+     * constructor is used for BROADCAST and DISCONNECT type Message objects.
+     *
      * @param message
-     * @param type 
+     * @param type
      */
     public Message(String message, MessageType type) {
         this.message = message;
@@ -26,11 +28,12 @@ public class Message implements Serializable {
     }
 
     /**
-     * Constructor for Message. Initializes the message, receiver, and type variables.
-     * This constructor is used for MESSAGETO type Message objects.
+     * Constructor for Message. Initializes the message, receiver, and type
+     * variables. This constructor is used for MESSAGETO type Message objects.
+     *
      * @param message
      * @param type
-     * @param receiver 
+     * @param receiver
      */
     public Message(String message, MessageType type, String receiver) {
         this.message = message;
@@ -45,9 +48,8 @@ public class Message implements Serializable {
     public String getReceiver() {
         return receiver;
     }
-    
+
     public MessageType getType() {
         return type;
     }
-
 }

@@ -20,11 +20,11 @@ import javax.swing.JTextArea;
  */
 public class UDPClient extends Thread {
 
-    JTextArea text;
-    DefaultListModel<String> clients;
-    JList clientList;
-    Client client;
-    public boolean run;
+    private JTextArea text;
+    private DefaultListModel<String> clients;
+    private JList clientList;
+    private Client client;
+    private boolean run;
 
     /**
      * Default constructor for this class. Initializes the class variables.
@@ -69,7 +69,7 @@ public class UDPClient extends Thread {
                 clients = new DefaultListModel<>();
                 String[] array = new String(serverMessage.getData()).trim().split(" ");
                 for (String s : array) {
-                    if (!s.equalsIgnoreCase("null") && !s.equalsIgnoreCase(client.clientName)) {
+                    if (!s.equalsIgnoreCase("null") && !s.equalsIgnoreCase(client.getClientName())) {
                         clients.addElement(s);
                     }
                 }

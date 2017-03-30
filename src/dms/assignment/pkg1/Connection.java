@@ -16,13 +16,13 @@ import javax.swing.JTextArea;
  */
 public class Connection extends Thread {
 
-    final String DONE = "done";
-    ObjectOutputStream out;
-    ObjectInputStream in;
-    Socket clientSocket;
-    Message message;
-    JTextArea text;
-    String clientName;
+    private final String DONE = "done";
+    private ObjectOutputStream out;
+    private ObjectInputStream in;
+    private Socket clientSocket;
+    private Message message;
+    private JTextArea text;
+    private String clientName;
 
     /**
      * Default constructor for Connection class. Initializes the socket and text
