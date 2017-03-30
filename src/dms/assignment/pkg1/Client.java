@@ -177,7 +177,11 @@ public class Client extends JFrame implements ActionListener, ListSelectionListe
 
         this.revalidate();
         this.repaint();
-        clientList.setSelectedValue(selection, true);
+        if (clients.contains(selection)){
+            clientList.setSelectedValue(selection, true);
+        } else {
+            clientList.setSelectedIndex(0);
+        }
     }
 
     public void disconnect() {
