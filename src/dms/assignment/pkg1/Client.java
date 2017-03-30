@@ -32,7 +32,7 @@ public class Client extends JFrame implements ActionListener, ListSelectionListe
 
     private final int PORT = 8765;
     private final String DONE = "done";
-    private static String hostName;
+    private String hostName = "";
     private String clientRequest;
     private ObjectOutputStream out;
     private ObjectInputStream in;
@@ -107,11 +107,17 @@ public class Client extends JFrame implements ActionListener, ListSelectionListe
      * process repeats until the server is stopped.
      */
     private void startClient() {
+        while (true) {
+           hostName = (String) JOptionPane.showInputDialog("Please enter IP address.");
         try {
             socket = new Socket(hostName, PORT);
         } catch (IOException e) {
             System.err.println(e.getMessage());
+            continue;
+        } 
+        break;
         }
+        
         try {
             out = new ObjectOutputStream(socket.getOutputStream());
             in = new ObjectInputStream(socket.getInputStream());

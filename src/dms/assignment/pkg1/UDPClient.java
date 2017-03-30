@@ -25,7 +25,9 @@ public class UDPClient extends Thread {
     private Client client;
     private boolean run;
     private String hostName;
-
+    
+    public UDPClient() {
+    }
     /**
      * Default constructor for this class. Initializes the class variables.
      *
