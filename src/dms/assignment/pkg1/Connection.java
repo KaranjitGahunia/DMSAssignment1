@@ -1,27 +1,22 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package dms.assignment.pkg1;
 
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.net.Socket;
-import java.util.ArrayList;
 import javax.swing.JTextArea;
 
 /**
+ * The Connection class is a thread that is created by the Server class. A
+ * Connection thread is created for each active client. This class connects each
+ * Client with the Server. All messages are transfered using these Connection
+ * threads.
  *
  * @author Alex
  */
 public class Connection extends Thread {
 
     final String DONE = "done";
-    DataInputStream input;
-    DataOutputStream output;
     ObjectOutputStream out;
     ObjectInputStream in;
     Socket clientSocket;
@@ -29,6 +24,13 @@ public class Connection extends Thread {
     JTextArea text;
     String clientName;
 
+    /**
+     * Default constructor for Connection class. Initializes the socket and text
+     * variables and starts the thread.
+     *
+     * @param socket
+     * @param text
+     */
     public Connection(Socket socket, JTextArea text) {
         try {
             clientSocket = socket;
@@ -36,11 +38,21 @@ public class Connection extends Thread {
             in = new ObjectInputStream(socket.getInputStream());
             this.text = text;
             this.start();
-        } catch (Exception e) {
-
+        } catch (IOException e) {
+            System.out.println(e);
         }
     }
 
+    /**
+     * Run method for Connection threads Initializes the clientName. Checks if
+     * the clientName proposed by client is valid or not. Repeats until client
+     * enters a valid name. Receives messages from client and sends the messages
+     * to appropriate clients. Threads response to the messages depends on the
+     * MessageType. This repeats until client sends a DISCONNECT message, after
+     * which the run method completes and the thread terminates.
+     *
+     *
+     */
     @Override
     public void run() {
         try {
@@ -94,14 +106,20 @@ public class Connection extends Thread {
                         }
                         break;
                 }
-
             }
-
-        } catch (Exception e) {
+        } catch (IOException | ClassNotFoundException e) {
             System.out.println(e);
         }
     }
 
+    /**
+     * Checks if the name provided is unique or not. If the name provided
+     * already exists in any of the connections in the server, the method will
+     * return false. If not, the method will return true.
+     * Method is used in the run method for this class.
+     * @param name
+     * @return
+     */
     private boolean uniqueName(String name) {
         if (Server.connections.isEmpty()) {
             return true;
@@ -117,10 +135,15 @@ public class Connection extends Thread {
             }
         }
         System.out.println("Name is unique");
-
         return true;
     }
 
+    /**
+     * toString method for Connection thread.
+     * Returns the clientName value.
+     * @return 
+     */
+    @Override
     public String toString() {
         return clientName;
     }

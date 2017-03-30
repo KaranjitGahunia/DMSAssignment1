@@ -1,13 +1,9 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package dms.assignment.pkg1;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Point;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -20,6 +16,8 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
 /**
+ * Class that represents the server side of the application. Contains a list of
+ * connections with clients.
  *
  * @author Alex
  */
@@ -31,31 +29,33 @@ public class Server extends JPanel {
     UDPServer UDPserver;
     private JScrollPane scrollpane;
 
+    /**
+     * Default constructor. Initializes the GUI elements.
+     */
     public Server() {
         super(new BorderLayout());
         setPreferredSize(new Dimension(500, 400));
-
         text = new JTextArea();
         scrollpane = new JScrollPane(text);
         scrollpane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         add(scrollpane);
-
     }
 
+    /**
+     * Method that runs the server activities. Initializes server elements of
+     * this Class. Creates Connection threads with new clients. Connections are
+     * started and stored in a list. This process repeats until the server is
+     * stopped.
+     */
     public void startServer() {
         ServerSocket serverSocket = null;
         boolean stopServer = false;
-
         try {
-            connections = Collections.synchronizedList(new ArrayList<Connection>());
+            connections = Collections.synchronizedList(new ArrayList<>());
             serverSocket = new ServerSocket(PORT);
             System.out.println("Server started at " + InetAddress.getLocalHost() + " on port " + PORT);
             text.append("Server started at " + InetAddress.getLocalHost() + " on port " + PORT + "\n");
-        } catch (Exception e) {
-            System.err.println(e.getMessage());
-        }
-        while (!stopServer) {
-            try {
+            while (!stopServer) {
                 Socket socket = serverSocket.accept();
                 System.out.println("Connection made with " + socket.getInetAddress());
                 text.append("Connection made with " + socket.getInetAddress() + "\n");
@@ -65,19 +65,19 @@ public class Server extends JPanel {
                     UDPserver = new UDPServer(connections);
                     UDPserver.start();
                 }
-
-            } catch (Exception e) {
-                stopServer = true;
-                System.err.println(e.getMessage());
             }
-        }
-        try {
             serverSocket.close();
-        } catch (Exception e) {
+        } catch (IOException e) {
+            stopServer = true;
             System.err.println(e.getMessage());
         }
     }
 
+    /**
+     * Main method for Server class.
+     * Sets up the JFrame and calls startServer method.
+     * @param args 
+     */
     public static void main(String args[]) {
         Server server = new Server();
 

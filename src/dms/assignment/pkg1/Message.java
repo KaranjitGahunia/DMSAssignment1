@@ -1,14 +1,11 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package dms.assignment.pkg1;
 
 import java.io.Serializable;
 
 /**
- *
+ * Class used to hold information regarding messages that are sent between clients.
+ * Contains the message, the recipients, and the type of the message.
+ * Message objects are sent between clients and the server.
  * @author Alex
  */
 public class Message implements Serializable {
@@ -17,11 +14,24 @@ public class Message implements Serializable {
     private String receiver;
     private MessageType type;
 
+    /**
+     * Constructor for Message. Initializes the message and type variables.
+     * This constructor is used for BROADCAST and DISCONNECT type Message objects.
+     * @param message
+     * @param type 
+     */
     public Message(String message, MessageType type) {
         this.message = message;
         this.type = type;
     }
 
+    /**
+     * Constructor for Message. Initializes the message, receiver, and type variables.
+     * This constructor is used for MESSAGETO type Message objects.
+     * @param message
+     * @param type
+     * @param receiver 
+     */
     public Message(String message, MessageType type, String receiver) {
         this.message = message;
         this.type = type;

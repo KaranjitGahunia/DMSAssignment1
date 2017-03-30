@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package dms.assignment.pkg1;
 
 import java.io.IOException;
@@ -16,6 +11,10 @@ import javax.swing.JList;
 import javax.swing.JTextArea;
 
 /**
+ * The UDPClient class is a thread that is created by the Client class. A
+ * UDPClient thread is created for each Client class. It is used to receive and
+ * handle UDP data sent by the Server which contains a list of currently
+ * connected lists.
  *
  * @author Alex
  */
@@ -27,16 +26,34 @@ public class UDPClient extends Thread {
     Client client;
     public boolean run;
 
+    /**
+     * Default constructor for this class. Initializes the class variables.
+     *
+     * @param text
+     * @param client
+     */
     public UDPClient(JTextArea text, Client client) {
         this.text = text;
         this.client = client;
-        run = true;
+        this.run = true;
     }
 
+    /**
+     * Method to set boolean run to false. This is used to stop the infinite
+     * loop in the run method, therefore terminating the thread.
+     */
     public void stopClient() {
-        run = false;
+        this.run = false;
     }
 
+    /**
+     * Run method for the UDPClient thread.
+     * The thread will try to receive UDP messages from the Server that contain
+     * the list of currently connected clients.
+     * This list is then processed and send to be updated by the Client class.
+     * This occurs every 3 seconds and repeats until the stopClient method is 
+     * called.
+     */
     public void run() {
         DatagramSocket aSocket = null;
         try {
@@ -47,29 +64,20 @@ public class UDPClient extends Thread {
                 DatagramPacket request = new DatagramPacket("".getBytes(),
                         "".length(), InetAddress.getLocalHost(), 8765);
                 aSocket.send(request);
-
                 DatagramPacket serverMessage = new DatagramPacket(buffer, buffer.length);
                 aSocket.receive(serverMessage);
                 clients = new DefaultListModel<>();
-                
                 String[] array = new String(serverMessage.getData()).trim().split(" ");
-                
                 for (String s : array) {
                     if (!s.equalsIgnoreCase("null") && !s.equalsIgnoreCase(client.clientName)) {
-                        
                         clients.addElement(s);
                     }
-                    
                 }
-                
                 client.updateClientList(clients);
             }
-
         } catch (SocketException e) {
             System.out.println("Socket: " + e.getMessage());
-        } catch (IOException e) {
-            System.out.println("Socket: " + e.getMessage());
-        } catch (InterruptedException e) {
+        } catch (IOException | InterruptedException e) {
             System.out.println("Socket: " + e.getMessage());
         } finally {
             if (aSocket != null) {
@@ -77,6 +85,4 @@ public class UDPClient extends Thread {
             }
         }
     }
-
 }
-
