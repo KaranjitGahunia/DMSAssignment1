@@ -22,20 +22,22 @@ public class UDPClient extends Thread {
 
     private JTextArea text;
     private DefaultListModel<String> clients;
-    private JList clientList;
     private Client client;
     private boolean run;
+    private String hostName;
 
     /**
      * Default constructor for this class. Initializes the class variables.
      *
      * @param text
      * @param client
+     * @param hostName
      */
-    public UDPClient(JTextArea text, Client client) {
+    public UDPClient(JTextArea text, Client client, String hostName) {
         this.text = text;
         this.client = client;
         this.run = true;
+        this.hostName = hostName;
     }
 
     /**
@@ -62,7 +64,7 @@ public class UDPClient extends Thread {
                 aSocket = new DatagramSocket();
                 byte[] buffer = new byte[1000];
                 DatagramPacket request = new DatagramPacket("".getBytes(),
-                        "".length(), InetAddress.getLocalHost(), 8765);
+                        "".length(), InetAddress.getByName(hostName), 8765);
                 aSocket.send(request);
                 DatagramPacket serverMessage = new DatagramPacket(buffer, buffer.length);
                 aSocket.receive(serverMessage);

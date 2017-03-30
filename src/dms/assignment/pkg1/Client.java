@@ -31,8 +31,8 @@ import javax.swing.event.ListSelectionListener;
 public class Client extends JFrame implements ActionListener, ListSelectionListener {
 
     private final int PORT = 8765;
-    private static final String HOST_NAME = "localhost";
     private final String DONE = "done";
+    private static String hostName;
     private String clientRequest;
     private ObjectOutputStream out;
     private ObjectInputStream in;
@@ -108,7 +108,7 @@ public class Client extends JFrame implements ActionListener, ListSelectionListe
      */
     private void startClient() {
         try {
-            socket = new Socket(HOST_NAME, PORT);
+            socket = new Socket(hostName, PORT);
         } catch (IOException e) {
             System.err.println(e.getMessage());
         }
@@ -128,7 +128,7 @@ public class Client extends JFrame implements ActionListener, ListSelectionListe
                 }
             }
             text.append("Enter message or " + DONE + " to exit client." + "\n");
-            UDPclient = new UDPClient(text, this);
+            UDPclient = new UDPClient(text, this, hostName);
             UDPclient.start();
             listener = new ServerListener();
             listener.start();
