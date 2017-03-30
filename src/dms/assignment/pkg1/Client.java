@@ -24,14 +24,14 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 /**
- * Class the represents the client side of the application.
+ * Class that represents the client side of the application.
  *
  * @author Alex, Karanjit
  */
 public class Client extends JFrame implements ActionListener, ListSelectionListener {
 
     private final int PORT = 8765;
-    private final String DONE = "done";
+    private String DONE;
     private String hostName = "";
     private String clientRequest;
     private ObjectOutputStream out;
@@ -108,16 +108,20 @@ public class Client extends JFrame implements ActionListener, ListSelectionListe
      */
     private void startClient() {
         while (true) {
-           hostName = (String) JOptionPane.showInputDialog("Please enter IP address.");
-        try {
-            socket = new Socket(hostName, PORT);
-        } catch (IOException e) {
-            System.err.println(e.getMessage());
-            continue;
-        } 
-        break;
+            hostName = (String) JOptionPane.showInputDialog("Please enter IP address.");
+            if (hostName == null) {
+                JOptionPane.showMessageDialog(rootPane, "The client will now close.", "Terminating", JOptionPane.INFORMATION_MESSAGE);
+                System.exit(0);
+            }
+            try {
+                socket = new Socket(hostName, PORT);
+            } catch (IOException e) {
+                JOptionPane.showMessageDialog(rootPane, "Invalid IP Address. Please try again.", "Invalid IP Address", JOptionPane.ERROR_MESSAGE);
+                continue;
+            }
+            break;
         }
-        
+
         try {
             out = new ObjectOutputStream(socket.getOutputStream());
             in = new ObjectInputStream(socket.getInputStream());
@@ -125,6 +129,14 @@ public class Client extends JFrame implements ActionListener, ListSelectionListe
             String serverResponse;
             while (true) {
                 clientName = (String) JOptionPane.showInputDialog("Please enter your name");
+                if (clientName == null) {
+                    disconnect();
+                    JOptionPane.showMessageDialog(rootPane, "The client will now close.", "Terminating", JOptionPane.INFORMATION_MESSAGE);
+                    System.exit(0);
+                } else if (clientName.isEmpty()) {
+                    JOptionPane.showMessageDialog(rootPane, "Please enter a name.", "Invalid Input", JOptionPane.ERROR_MESSAGE);
+                    continue;
+                }
                 out.writeObject(clientName);
                 serverResponse = (String) in.readObject();
                 if (serverResponse.equalsIgnoreCase("INVALID NAME. ALREADY IN USE".trim())) {
@@ -291,10 +303,10 @@ public class Client extends JFrame implements ActionListener, ListSelectionListe
         }
     }
 
-    public String getClientName(){
+    public String getClientName() {
         return this.clientName;
     }
-    
+
     /**
      * Main method for client class. Creates a client thread and starts it.
      *
