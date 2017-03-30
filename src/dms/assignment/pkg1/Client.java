@@ -31,7 +31,7 @@ import javax.swing.event.ListSelectionListener;
 public class Client extends JFrame implements ActionListener, ListSelectionListener {
 
     private final int PORT = 8765;
-    private String DONE;
+    private String DONE = "done";
     private String hostName = "";
     private String clientRequest;
     private ObjectOutputStream out;
